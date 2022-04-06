@@ -4,13 +4,14 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 import cv2
-from pipeline import gstreamer_pipeline
+from .gstreamer_pipeline.pipeline import gstreamer_pipeline
+# from pipeline import gstreamer_pipeline
 
 class CsiPublisher(Node):
 
     def __init__(self):
         camcfg, rate = gstreamer_pipeline()
-        super.__init__('csi_raw_publisher')
+        super().__init__('csi_raw_publisher')
         self.publisher = self.create_publisher(Image, 'csi_raw', 10)
         self.timer_period = 1.0/rate
         self.timer = self.create_timer(self.timer_period, self.timer_callback)
@@ -23,10 +24,12 @@ class CsiPublisher(Node):
 
         if ret == True:
             self.publisher.publish(self.br.cv2_to_imgmsg(frame))
-        self.get_logger().info('Publish CSI raw frame')
+            self.get_logger().info('Publish CSI raw frame')
+        else:
+            self.get_logger().info('unable to read frame')
 
 def main(args=None):
-    rclpy.init(arg=args)
+    rclpy.init()
 
     csi_raw_pub = CsiPublisher()
     rclpy.spin(csi_raw_pub)
