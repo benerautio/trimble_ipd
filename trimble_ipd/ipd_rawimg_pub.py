@@ -13,13 +13,13 @@ class CsiPublisher(Node):
         camcfg, rate = gstreamer_pipeline()
         super().__init__('csi_raw_publisher')
         self.publisher = self.create_publisher(Image, 'csi_raw', 10)
-        self.timer_period = 1.0/rate
-        self.timer = self.create_timer(self.timer_period, self.timer_callback)
+        #self.timer_period = 1.0/rate
+        #self.timer = self.create_timer(self.timer_period, self.timer_callback)
         # Add error checking here for if the camera cannot open the stream!
         self.cap = cv2.VideoCapture((camcfg), cv2.CAP_GSTREAMER)
         self.br = CvBridge()
 
-    def timer_callback(self):
+    def pub_img(self):
         ret, frame = self.cap.read()
 
         if ret == True:
@@ -32,10 +32,14 @@ def main(args=None):
     rclpy.init()
 
     csi_raw_pub = CsiPublisher()
-    rclpy.spin(csi_raw_pub)
+
+    while(rclpy.ok()):
+        csi_raw_pub.pub_img()
+        if (rclpy.ok()):
+            rclpy.spin_once(csi_raw_pub)
 
     csi_raw_pub.destroy_node()
-    rclpy.shutdown
+    rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
