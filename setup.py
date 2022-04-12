@@ -16,6 +16,7 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        ('trimble_ipd/pnp_modular.py'),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -26,7 +27,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'ipd_rawimg_pub = trimble_ipd.ipd_rawimg_pub:main'
+            'ipd_rawimg_pub = trimble_ipd.ipd_rawimg_pub:main',
+            'ipd_pose_estimator = trimble_ipd.ipd_pose_estimator:main'
         ],
     },
 )

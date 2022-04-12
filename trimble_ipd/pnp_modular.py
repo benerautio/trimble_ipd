@@ -1,13 +1,17 @@
 
 import numpy as np
-import parse_params
+#import parse_params
 import math
 import cv2
 #import pnp
 #import matrix_util
 import traceback
-import pySerialTransfer as txfer
-#from pySerialTransfer.pySerialTransfer import pySerialTransfer as txfer
+# import pySerialTransfer as txfer
+import json
+import os
+from trimble_ipd.pySerialTransfer import pySerialTransfer as txfer
+import sys
+sys.path.append('/pySerialTransfer/pySerialTransfer')
 
 
 #fisheye calibration process
@@ -21,11 +25,33 @@ import pySerialTransfer as txfer
 
 #, SCALE_FACTOR, BALANCE,IMG_W,IMG_H,FILENAME,objPts,K,D
 ########################################################################################
+def getCalibrationParams(filename):
+    f = open(filename)
+
+    data = json.load(f)
+
+    cameraMatrix = np.zeros((3, 3),dtype=np.longdouble)
+    cameraMatrix[0][0] = data['fx']
+    cameraMatrix[1][1] = data['fy']
+    cameraMatrix[0][2] = data['cx']
+    cameraMatrix[1][2] = data['cy']
+    cameraMatrix[2][2] = 1
+    #print(cameraMatrix)
+
+    distCoeff = np.zeros((1,5), dtype = np.longdouble)
+    distCoeff[0][0] = data['k1']
+    distCoeff[0][1] = data['k2']
+    distCoeff[0][2] = data['p1']
+    distCoeff[0][3] = data['p2']
+    distCoeff[0][4] = data['k3']
+
+    return (cameraMatrix,distCoeff)
+
 class pipeline:
     def __init__(self):
         self.SCALE_FACTOR = 1.0
         self.BALANCE = 1.0
-        self.FILENAME = '/home/Arducam_Feb04_intrinsic_parameters.json'
+        self.FILENAME = '/home/cam_cal.json'
         self.objPts = [
                 (-499.269, 0.0, 0.0),
                 (-258.762,465.137,0.0),
@@ -79,7 +105,7 @@ class pipeline:
 
         
     def getCalibration(self):
-        K,D = parse_params.getCalibrationParams(self.FILENAME)
+        K,D = getCalibrationParams(self.FILENAME)
         K = np.float32(K)
         D = np.float32(D)
         self.K = K

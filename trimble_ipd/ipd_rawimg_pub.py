@@ -12,7 +12,7 @@ class CsiPublisher(Node):
     def __init__(self):
         camcfg, rate = gstreamer_pipeline()
         super().__init__('csi_raw_publisher')
-        self.publisher = self.create_publisher(Image, 'csi_raw', 10)
+        self.publisher = self.create_publisher(Image, 'csi_raw', 30)
         #self.timer_period = 1.0/rate
         #self.timer = self.create_timer(self.timer_period, self.timer_callback)
         # Add error checking here for if the camera cannot open the stream!
@@ -21,7 +21,7 @@ class CsiPublisher(Node):
 
     def pub_img(self):
         ret, frame = self.cap.read()
-
+        print("img pub function")
         if ret == True:
             self.publisher.publish(self.br.cv2_to_imgmsg(frame, encoding='passthrough'), )
             self.get_logger().info('Publish CSI raw frame')
@@ -34,9 +34,11 @@ def main(args=None):
     csi_raw_pub = CsiPublisher()
 
     while(rclpy.ok()):
+        print("while loop")
         csi_raw_pub.pub_img()
-        if (rclpy.ok()):
-            rclpy.spin_once(csi_raw_pub)
+        # if (rclpy.ok()):
+        #     print("if statement")
+        #     rclpy.spin_once(csi_raw_pub)
 
     csi_raw_pub.destroy_node()
     rclpy.shutdown()
