@@ -21,7 +21,7 @@ class CsiPublisher(Node):
 
     def pub_img(self):
         ret, frame = self.cap.read()
-        print("img pub function")
+        #print("img pub function")
         if ret == True:
             self.publisher.publish(self.br.cv2_to_imgmsg(frame, encoding='passthrough'), )
             self.get_logger().info('Publish CSI raw frame')
@@ -34,7 +34,7 @@ def main(args=None):
     csi_raw_pub = CsiPublisher()
 
     while(rclpy.ok()):
-        print("while loop")
+        #print("while loop")
         csi_raw_pub.pub_img()
         # if (rclpy.ok()):
         #     print("if statement")

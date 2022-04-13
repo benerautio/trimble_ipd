@@ -1,10 +1,10 @@
-import json
+import yaml
 import os
 import numpy as np
 def getCalibrationParams(filename):
     f = open(filename)
 
-    data = json.load(f)
+    data = yaml.load(f)
 
     cameraMatrix = np.zeros((3, 3),dtype=np.longdouble)
     cameraMatrix[0][0] = data['fx']
@@ -12,7 +12,7 @@ def getCalibrationParams(filename):
     cameraMatrix[0][2] = data['cx']
     cameraMatrix[1][2] = data['cy']
     cameraMatrix[2][2] = 1
-    #print(cameraMatrix)
+    print(cameraMatrix)
 
     distCoeff = np.zeros((1,5), dtype = np.longdouble)
     distCoeff[0][0] = data['k1']
@@ -20,5 +20,8 @@ def getCalibrationParams(filename):
     distCoeff[0][2] = data['p1']
     distCoeff[0][3] = data['p2']
     distCoeff[0][4] = data['k3']
+    print(distCoeff)
 
     return (cameraMatrix,distCoeff)
+
+getCalibrationParams('cam_cal.yaml')
