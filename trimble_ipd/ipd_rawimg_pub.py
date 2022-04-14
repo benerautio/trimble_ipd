@@ -24,7 +24,7 @@ class CsiPublisher(Node):
         #print("img pub function")
         if ret == True:
             self.publisher.publish(self.br.cv2_to_imgmsg(frame, encoding='passthrough'), )
-            self.get_logger().info('Publish CSI raw frame')
+            #self.get_logger().info('Publish CSI raw frame')
         else:
             self.get_logger().info('unable to read frame')
 

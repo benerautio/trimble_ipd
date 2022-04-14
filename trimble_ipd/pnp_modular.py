@@ -55,10 +55,10 @@ class pipeline:
         self.BALANCE = 1.0
         self.FILENAME = '/home/cam_cal.yaml'
         self.objPts = [
-                (-499.269, 0.0, 0.0),
-                (-258.762,465.137,0.0),
-                (238.125,465.137,0.0),
-                (496.09375,0.0,0.0)
+                (-474.0, 0.0,   0.0),
+                (-248.0, 340.0, 0.0),
+                (248.0,  340.0, 0.0),
+                (496.0,  0.0,   0.0)
                 ]
         self.K = None
         self.D = None
@@ -98,8 +98,8 @@ class pipeline:
             self.link.send(send_size)
 
     def changeCycle(self, count):
-        if count != 4 and self.cycle <= 95:
-            cycle = self.cycle + 5
+        if count != 4 and self.cycle <= 90:
+            cycle = self.cycle + 10
             self.setCycle(cycle)
         elif self.cycle == 100:
             cycle = 10
@@ -174,7 +174,8 @@ class pipeline:
             if centroidPts[2][1] > centroidPts[3][1]:
                 centroidPts[2], centroidPts[3] = centroidPts[3], centroidPts[2]
 
-            ret,rvecs,tvecs = cv2.solvePnP(self.objPnts, centroidPts, self.K, self.D, flags = cv2.SOLVEPNP_IPPE)
+            ret,rvecs,tvecs = cv2.solvePnP(np.float32(self.objPts), np.float32(centroidPts), self.K, self.D, flags = cv2.SOLVEPNP_IPPE)
+            # print(rvecs)
             if ret:
                 rMat, _ = cv2.Rodrigues(rvecs)
 
@@ -187,6 +188,7 @@ class pipeline:
                 #get euler angles
                 extMat = rMatNew[:3,:4]
                 eulerAngles = cv2.decomposeProjectionMatrix(extMat)[-1]
+                return ret, rvecs, tvecs
             else: 
                 print("PNP failed")
         else:
