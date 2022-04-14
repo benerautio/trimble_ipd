@@ -10,6 +10,7 @@ from geometry_msgs.msg import TransformStamped
 from tf2_ros import TransformBroadcaster
 import transforms3d
 import numpy as np
+import math
 
 
 
@@ -42,29 +43,30 @@ class PoseEstimator(Node):
             cv_img = self.bridge.imgmsg_to_cv2(CsiImg, '8UC1')
         except CvBridgeError as e:
             print(e)
-        ret, euler, tvec = self.pipeline.Find_Pose(cv_img)
+        ret, euler, tvec, euler_angles = self.pipeline.Find_Pose(cv_img)
         #print("ret pnp: " + str(ret))
         if ret:
-            print("DEBUG: R: " +str(euler)+"T: "+str(tvec))
+
+            # print("DEBUG: R: " +str(euler)+"T: "+str(tvec))
             str_pose = str(euler * 180.0 / np.pi)
-            str_yaw = str((6.0/5.0) * (4.0/3.0) * euler[1][0] * (180.0 / np.pi))
+            str_yaw = "yaw: " + str((45.0/42.0)*(45.0/43.5)*(6.0/5.0) * (4.0/3.0) * euler[1][0] * (180.0 / math.pi))
             self.get_logger().info("pose found")
             # self.get_logger().info(str_pose)
             self.get_logger().info(str_yaw)
-            t = TransformStamped()
-            t.header.stamp = self.get_clock().now().to_msg()
-            t.header.frame_id = 'MarkerTree'
-            t.child_frame_id = 'Camera'
-            t.transform.translation.x = tvec[0][0]
-            t.transform.translation.y = tvec[1][0]
-            t.transform.translation.z = tvec[2][0]
-            q = transforms3d.euler.euler2quat(euler[0][0],euler[1][0],euler[2][0])
-            t.transform.rotation.x = q[0]
-            t.transform.rotation.y = q[1]
-            t.transform.rotation.z = q[2]
-            t.transform.rotation.w = q[3]
+            # t = TransformStamped()
+            # t.header.stamp = self.get_clock().now().to_msg()
+            # t.header.frame_id = 'MarkerTree'
+            # t.child_frame_id = 'Camera'
+            # t.transform.translation.x = tvec[0][0]
+            # t.transform.translation.y = tvec[1][0]
+            # t.transform.translation.z = tvec[2][0]
+            # q = transforms3d.euler.euler2quat(euler[0][0],euler[1][0],euler[2][0])
+            # t.transform.rotation.x = q[0]
+            # t.transform.rotation.y = q[1]
+            # t.transform.rotation.z = q[2]
+            # t.transform.rotation.w = q[3]
 
-            self.br.sendTransform(t)
+            # self.br.sendTransform(t)
 
 def main():
     rclpy.init()

@@ -16,6 +16,34 @@ import sys
 sys.path.append('/pySerialTransfer/pySerialTransfer')
 
 
+def isRotationMatrix(R) :
+    Rt = np.transpose(R)
+    shouldBeIdentity = np.dot(Rt, R)
+    I = np.identity(3, dtype = R.dtype)
+    n = np.linalg.norm(I - shouldBeIdentity)
+    return n < 1e-6
+
+def rotationMatrixToEulerAngles(R) :
+
+    assert(isRotationMatrix(R))
+
+    sy = math.sqrt(R[0,0] * R[0,0] +  R[1,0] * R[1,0])
+
+    singular = sy < 1e-6
+
+    if  not singular :
+        x = math.atan2(R[2,1] , R[2,2])
+        y = math.atan2(-R[2,0], sy)
+        z = math.atan2(R[1,0], R[0,0])
+    else :
+        x = math.atan2(-R[1,2], R[1,1])
+        y = math.atan2(-R[2,0], sy)
+        z = 0
+
+    return np.array([x, y, z])
+
+
+
 #fisheye calibration process
 # https://medium.com/@kennethjiang/calibrate-fisheye-lens-using-opencv-333b05afa0b0
 
@@ -99,10 +127,13 @@ class pipeline:
 
     def changeCycle(self, count):
         if count != 4 and self.cycle <= 90:
-            cycle = self.cycle + 10
+            #cycle = self.cycle + 10
+            cycle = 10
+            self.cycle = 10
+            print("changeCycle: " + str(self.cycle))
             self.setCycle(cycle)
         elif self.cycle == 100:
-            cycle = 10
+            #cycle = 10
             self.setCycle(cycle)
 
         
@@ -174,28 +205,29 @@ class pipeline:
             if centroidPts[2][1] > centroidPts[3][1]:
                 centroidPts[2], centroidPts[3] = centroidPts[3], centroidPts[2]
 
-            ret,rvecs,tvecs = cv2.solvePnP(np.float32(self.objPts), np.float32(centroidPts), self.K, self.D, flags = cv2.SOLVEPNP_IPPE)
+            ret,rvecs,tvecs = cv2.solvePnP(np.float32(self.objPts), np.float32(centroidPts), np.float32(self.K), np.float32(self.D), flags = cv2.SOLVEPNP_IPPE)
             # print(rvecs)
             if ret:
                 rMat, _ = cv2.Rodrigues(rvecs)
 
                 #Making the rMat into the transform format for the decomposition
-                rMatNew = np.c_[rMat, np.zeros((3,1))]
-                rMatNew = np.r_[rMatNew,np.zeros((1,4))]
-                rMatNew[0:3, 3] = tvecs.reshape(3)
-                rMatNew[3,3] = 1
+                # rMatNew = np.c_[rMat, np.zeros((3,1))]
+                # rMatNew = np.r_[rMatNew,np.zeros((1,4))]
+                # rMatNew[0:3, 3] = tvecs.reshape(3)
+                # rMatNew[3,3] = 1
 
                 #get euler angles
-                extMat = rMatNew[:3,:4]
-                eulerAngles = cv2.decomposeProjectionMatrix(extMat)[-1]
-                return ret, rvecs, tvecs
+                # extMat = rMatNew[:3,:4]
+                euler_angles = rotationMatrixToEulerAngles(rMat)
+                # eulerAngles = cv2.decomposeProjectionMatrix(extMat)[-1]
+                return ret, rvecs, tvecs, euler_angles
             else: 
                 print("PNP failed")
         else:
             ret = False
             self.changeCycle(num_found)
             print("Incorrect number of centroids: " + str(num_found))
-        return ret ,None, None
+        return ret ,None, None, None
 
 if __name__ == '__main__':
     p = pipeline()
