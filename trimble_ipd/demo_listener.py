@@ -17,7 +17,7 @@ class FrameListener(Node):
         self.target_frame = 'MarkerTree'
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
-        self.pose_publisher = self.create_publisher(PoseStamped, 'MarkerTreePose', 10)
+        self.pose_publisher = self.create_publisher(PoseStamped, 'MarkerTreePose', 1000)
         self.timer = self.create_timer(0.05, self.on_timer)
 
     def on_timer(self):
@@ -38,6 +38,7 @@ class FrameListener(Node):
             
         msg = PoseStamped()
         msg.header.stamp = self.get_clock().now().to_msg()
+        msg.header.frame_id = self.target_frame
         msg.pose.position.x = trans.transform.translation.x
         msg.pose.position.y = trans.transform.translation.y
         msg.pose.position.z = trans.transform.translation.z
@@ -46,7 +47,7 @@ class FrameListener(Node):
         msg.pose.orientation.z = trans.transform.rotation.z
         msg.pose.orientation.w = trans.transform.rotation.w
         self.pose_publisher.publish(msg)
-        self.get_logger().info("Publishing pose")
+        # self.get_logger().info("Publishing pose")
 
 def main():
     rclpy.init()

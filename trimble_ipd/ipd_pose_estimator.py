@@ -26,7 +26,7 @@ class PoseEstimator(Node):
             Image,
             'csi_raw',
             self.img_callback,
-            10)
+            20)
         self.subscription
         self.bridge = CvBridge()
         self.pipeline = pipeline()
