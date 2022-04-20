@@ -28,7 +28,8 @@ setup(
     entry_points={
         'console_scripts': [
             'ipd_rawimg_pub = trimble_ipd.ipd_rawimg_pub:main',
-            'ipd_pose_estimator = trimble_ipd.ipd_pose_estimator:main'
+            'ipd_pose_estimator = trimble_ipd.ipd_pose_estimator:main',
+            'demo_listener = trimble_ipd.demo_listener:main'
         ],
     },
 )

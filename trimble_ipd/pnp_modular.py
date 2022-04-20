@@ -218,16 +218,21 @@ class pipeline:
 
                 #get euler angles
                 # extMat = rMatNew[:3,:4]
-                euler_angles = rotationMatrixToEulerAngles(rMat)
+                #euler_angles = rotationMatrixToEulerAngles(rMat)
                 # eulerAngles = cv2.decomposeProjectionMatrix(extMat)[-1]
-                return ret, rvecs, tvecs, euler_angles
+                #[P Y R] or [X Y Z] in degrees
+                rMatTp = rMat.transpose()
+                euler_angles = [math.atan2(-rMatTp[2][1], rMatTp[2][2]),
+                                math.asin(rMatTp[2][0]),
+                                math.atan2(-rMatTp[1][0], rMatTp[0][0])] 
+                return ret, rvecs, tvecs, euler_angles, rMat
             else: 
                 print("PNP failed")
         else:
             ret = False
             self.changeCycle(num_found)
             print("Incorrect number of centroids: " + str(num_found))
-        return ret ,None, None, None
+        return ret ,None, None, None, None
 
 if __name__ == '__main__':
     p = pipeline()
