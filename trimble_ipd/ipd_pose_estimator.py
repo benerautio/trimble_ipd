@@ -19,6 +19,8 @@ SAVE_PATH = '/home'
 USER = ''
 CAL_PATH = os.path.join(SAVE_PATH, USER,CAL_FILE)
 
+
+
 class PoseEstimator(Node):
     def __init__(self):
         super().__init__('ipd_pose_estimator')
@@ -46,12 +48,14 @@ class PoseEstimator(Node):
         ret, rvec, tvec, euler_angles, rMat = self.pipeline.Find_Pose(cv_img)
         if ret:
 
-            # print("DEBUG: R: " +str(euler)+"T: "+str(tvec))
-            #str_pose = str(euler * 180.0 / np.pi)
-            str_yaw = "yaw: " + str(euler_angles[1] * (180.0 / math.pi))
-            self.get_logger().info("pose found")
-            # self.get_logger().info(str_pose)
+            str_pitch = "pitch: " + str(euler_angles[0] * (180.0 / math.pi))
+            str_yaw = "yaw: " + str(euler_angles[1] * (180.0 / math.pi))    
+            str_roll = "roll: " + str(euler_angles[2] * (180.0 / math.pi))
+            self.get_logger().info("tf MarkerTree->Camera found")
+
+            self.get_logger().info(str_pitch)
             self.get_logger().info(str_yaw)
+            self.get_logger().info(str_roll)
             t = TransformStamped()
             t.header.stamp = self.get_clock().now().to_msg()
             t.header.frame_id = 'MarkerTree'

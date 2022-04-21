@@ -15,6 +15,8 @@ from trimble_ipd.pySerialTransfer import pySerialTransfer as txfer
 import sys
 sys.path.append('/pySerialTransfer/pySerialTransfer')
 
+criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 20, 0.1)
+
 
 def isRotationMatrix(R) :
     Rt = np.transpose(R)
@@ -83,11 +85,11 @@ class pipeline:
         self.BALANCE = 1.0
         self.FILENAME = '/home/cam_cal.yaml'
         self.objPts = [
-                (-474.0, 0.0,   0.0),
-                (-248.0, 340.0, 0.0),
-                (248.0,  340.0, 0.0),
-                (496.0,  0.0,   0.0)
-                ]
+                (-497.0, 0.0, 0.0),
+                (-250.0, -341.0, 0.0),
+                (249.0, -346.0, 0.0),
+                (500.0, 0.0, 0.0)
+        ]
         self.K = None
         self.D = None
         self.YAW = None
@@ -206,26 +208,16 @@ class pipeline:
                 centroidPts[2], centroidPts[3] = centroidPts[3], centroidPts[2]
 
             ret,rvecs,tvecs = cv2.solvePnP(np.float32(self.objPts), np.float32(centroidPts), np.float32(self.K), np.float32(self.D), flags = cv2.SOLVEPNP_IPPE)
-            # print(rvecs)
+
             if ret:
-                rMat, _ = cv2.Rodrigues(rvecs)
-
-                #Making the rMat into the transform format for the decomposition
-                # rMatNew = np.c_[rMat, np.zeros((3,1))]
-                # rMatNew = np.r_[rMatNew,np.zeros((1,4))]
-                # rMatNew[0:3, 3] = tvecs.reshape(3)
-                # rMatNew[3,3] = 1
-
-                #get euler angles
-                # extMat = rMatNew[:3,:4]
-                #euler_angles = rotationMatrixToEulerAngles(rMat)
-                # eulerAngles = cv2.decomposeProjectionMatrix(extMat)[-1]
+                rvec_refine, tvec_refine = cv2.solvePnPRefineLM(np.float32(self.objPts), np.float32(centroidPts), np.float32(self.K), np.float32(self.D), rvecs, tvecs, criteria)
+                rMat, _ = cv2.Rodrigues(rvec_refine)
                 #[P Y R] or [X Y Z] in degrees
                 rMatTp = rMat.transpose()
                 euler_angles = [math.atan2(-rMatTp[2][1], rMatTp[2][2]),
                                 math.asin(rMatTp[2][0]),
                                 math.atan2(-rMatTp[1][0], rMatTp[0][0])] 
-                return ret, rvecs, tvecs, euler_angles, rMat
+                return ret, rvec_refine, tvec_refine, euler_angles, rMat
             else: 
                 print("PNP failed")
         else:
