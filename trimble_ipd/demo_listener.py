@@ -8,13 +8,15 @@ from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
 from geometry_msgs.msg import PoseStamped
 from rclpy.duration import Duration
+from transforms3d import quaternions
+import numpy as np
 
 class FrameListener(Node):
 
     def __init__(self):
         super().__init__('camera_tf2_frame_listener')
 
-        self.target_frame = 'MarkerTree'
+        self.target_frame = 'Camera'
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
         self.pose_publisher = self.create_publisher(PoseStamped, 'MarkerTreePose', 1000)
@@ -22,11 +24,11 @@ class FrameListener(Node):
 
     def on_timer(self):
         from_frame_rel = self.target_frame
-        to_frame_rel = 'Camera'
+        to_frame_rel = 'MarkerTree'
 
         try:
             now = rclpy.time.Time()
-            trans = self.tf_buffer.lookup_transform(
+            trans_MarkerTree_Camera = self.tf_buffer.lookup_transform(
                 to_frame_rel,
                 from_frame_rel,
                 now,
@@ -35,17 +37,52 @@ class FrameListener(Node):
             self.get_logger().info(
                 f'couldnt tf {to_frame_rel} to {from_frame_rel}: {ex}')
             return
-            
+        
+        try:
+            now = rclpy.time.Time()
+            trans_Camera_Tractor = self.tf_buffer.lookup_transform(
+                'Camera',
+                'Tractor',
+                now,
+                timeout=Duration(seconds=1.0))
+        except TransformException as ex:
+            self.get_logger().info(
+                f'couldnt tf Camera to Tractor: {ex}')
+            return
+
+        #must use MarkerTree->Camera, then Camera->Tractor
+        #https://matthew-brett.github.io/transforms3d/reference/transforms3d.quaternions.html#transforms3d.quaternions.quat2mat
         msg = PoseStamped()
+
+        #in transforms3d it is [w x y z]
+        q_mt_c = [trans_MarkerTree_Camera.transform.rotation.w,
+                  trans_MarkerTree_Camera.transform.rotation.x,
+                  trans_MarkerTree_Camera.transform.rotation.y,
+                  trans_MarkerTree_Camera.transform.rotation.z
+                  ]
+
+        #translation of markertree relative to camera from PNP
+        tvec_mt_cam = [
+            trans_MarkerTree_Camera.transform.translation.x,
+            trans_MarkerTree_Camera.transform.translation.y,
+            trans_MarkerTree_Camera.transform.translation.z
+        ]
+
+        rMatTest = np.matrix(quaternions.quat2mat(q_mt_c))
+        trans_fix = np.asarray(-rMatTest.T * (np.matrix(tvec_mt_cam).T), dtype=np.float)
+
         msg.header.stamp = self.get_clock().now().to_msg()
-        msg.header.frame_id = self.target_frame
-        msg.pose.position.x = trans.transform.translation.x
-        msg.pose.position.y = trans.transform.translation.y
-        msg.pose.position.z = trans.transform.translation.z
-        msg.pose.orientation.x = trans.transform.rotation.x
-        msg.pose.orientation.y = trans.transform.rotation.y
-        msg.pose.orientation.z = trans.transform.rotation.z
-        msg.pose.orientation.w = trans.transform.rotation.w
+        msg.header.frame_id = 'Camera'
+        
+        msg.pose.position.x = trans_fix[0][0]
+        msg.pose.position.y = trans_fix[1][0]
+        msg.pose.position.z = trans_fix[2][0]
+        
+        msg.pose.orientation.x = q_mt_c[1]
+        msg.pose.orientation.y = q_mt_c[2]
+        msg.pose.orientation.z = q_mt_c[3]
+        msg.pose.orientation.w = -q_mt_c[0]
+
         self.pose_publisher.publish(msg)
         # self.get_logger().info("Publishing pose")
 

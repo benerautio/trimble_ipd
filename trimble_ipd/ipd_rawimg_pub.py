@@ -92,13 +92,16 @@ class CsiPublisher(Node):
         # self.get_logger().info(str_pitch)
         self.get_logger().info(str_yaw)
         # self.get_logger().info(str_roll)
+        
         t = TransformStamped()
         t.header.stamp = self.get_clock().now().to_msg()
         t.header.frame_id = 'MarkerTree'
         t.child_frame_id = 'Camera'
+
         t.transform.translation.x = tvec[0][0]
         t.transform.translation.y = tvec[1][0]
         t.transform.translation.z = tvec[2][0]
+
         q = transforms3d.quaternions.mat2quat(rMat)
         t.transform.rotation.x = q[0]
         t.transform.rotation.y = q[1]
